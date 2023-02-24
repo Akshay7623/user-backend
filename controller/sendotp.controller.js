@@ -1,4 +1,5 @@
 const { RegisterModel } = require("../model/model");
+const client = require('twilio')(process.env.TWILLIO_SID,process.env.TWILLIO_TOKEN);
 
 const sendOtp = async (req, res, next) => {
 
@@ -28,7 +29,11 @@ const sendOtp = async (req, res, next) => {
         );
 
         if (regUser.modifiedCount === 1) {
-          //call api here only !
+        client.messages .create({ 
+        body: `Your varification code is ${req.body.otp}`,  
+        messagingServiceSid: 'MG3a8c7b02d033dcb5eb998afb8476175c',      
+        to: `+91${req.body.mobile}`
+         });
         }
         res.json({ message: "OTP_SENT" });
       } else {
@@ -39,6 +44,12 @@ const sendOtp = async (req, res, next) => {
     const data = RegisterModel(req.body);
     await data.save();
     //call send sms api here only !
+    client.messages .create({ 
+      body: `Your varification code is ${req.body.otp}`,  
+      messagingServiceSid: 'MG3a8c7b02d033dcb5eb998afb8476175c',      
+      to: `+91${req.body.mobile}`
+       });
+
     res.json({ message: "OTP_SENT" });
   }
 };

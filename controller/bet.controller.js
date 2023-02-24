@@ -2,10 +2,15 @@ const {RegisterModel,BetParityModel,BetSapreModel,BetBconeModel,BetEmerdModel} =
 
 const Bet = async (req,res,next)=>{
     const userData = await RegisterModel.findOne({_id:req.body.userId});
-
-
     if(userData){
+
         const wallet = userData.wallet;
+        const lastPeriod = userData.currentPeriod;
+        let oldParityArr = userData.parity;
+        let oldSapreArr = userData.sapre;
+        let oldBconeArr = userData.bcone;
+        let oldEmerdArr = userData.emerd;
+        let inviteCode = userData.inviteCode;
         const total = parseInt(req.body.no_of_orders)*parseInt(req.body.contract_amount);
         
         function addMinutes(date, minutes) {
@@ -52,45 +57,233 @@ const Bet = async (req,res,next)=>{
         const time = new Date().getTime();
         const Period = getPeriod();
 
-        if(wallet > total){
+        if(wallet >= total){
             if(getMinutes() === 0 && (59 - getSec()) <30){
                 res.json({message:'TIMEOUT'});
                 return;
             }
         
             const remain = wallet - total;
-            const update = await RegisterModel.updateOne({_id:req.body.userId},{wallet:remain});
+            const update = await RegisterModel.updateOne({_id:req.body.userId},{$inc:{wallet:-total}});
             const server = req.body.server;
             let bet;
-            switch (server) {
-              case 'parity':
-               bet = BetParityModel({userId:req.body.userId,Period:Period,time:time,betType:req.body.betType,value:req.body.value,no_of_orders:req.body.no_of_orders,contract_amount:req.body.contract_amount,total_amount:total});
+
+            if(update.modifiedCount === 1){
+              switch (server) {
+                case 'parity':
+                 bet = BetParityModel({userId:req.body.userId,Period:Period,time:time,betType:req.body.betType,value:req.body.value,no_of_orders:req.body.no_of_orders,contract_amount:req.body.contract_amount,total_amount:total});
+                 
+                  if(lastPeriod !== parseInt(Period)){
+                    //its for the first time
+  
+                  let zeroArr = [0,0,0,0,0,0,0,0,0,0,0,0,0];
+                  let AllZero = [0,0,0,0,0,0,0,0,0,0,0,0,0];
+  
+                  if(req.body.betType !== 'color'){
+                    //it is number bet
+                      zeroArr[req.body.value] = (total - (total*2)/100)*9;
+                      await RegisterModel.updateOne({_id:req.body.userId},{$set:{currentPeriod:Period,parity:zeroArr,sapre:AllZero,bcone:AllZero,emerd:AllZero}});
+                  }else{
+                    //it is color bet
+                    if(req.body.value === 'Green'){
+                      zeroArr[10] = (total - (total*2)/100)*2;
+                    }else if(req.body.value === 'Violet'){
+                      zeroArr[11] = (total - (total*2)/100)*4.5;
+                    }else{
+                      zeroArr[12] = (total - (total*2)/100)*2;
+                    }
+                    await RegisterModel.updateOne({_id:req.body.userId},{$set:{currentPeriod:Period,parity:zeroArr,sapre:AllZero,bcone:AllZero,emerd:AllZero}});
+                  }
+
+                  }else{
+                    let zeroArr = [0,0,0,0,0,0,0,0,0,0,0,0,0];
+                    if(req.body.betType !== 'color'){
+                      zeroArr[req.body.value] = (total - (total*2)/100)*9;7
+                      let parity = oldParityArr.map((v,i)=>zeroArr[i]+v);
+                      await RegisterModel.updateOne({_id:req.body.userId},{$set:{currentPeriod:Period,parity:parity}});
+                    }else{
+  
+                      if(req.body.value === 'Green'){
+                        zeroArr[10] = (total - (total*2)/100)*2;
+                        }else if(req.body.value === 'Violet'){
+                        zeroArr[11] = (total - (total*2)/100)*4.5;
+                        }else{
+                        zeroArr[12] = (total - (total*2)/100)*2;
+                        }
+  
+                      let parity = oldParityArr.map((v,i)=>zeroArr[i]+v);
+                      await RegisterModel.updateOne({_id:req.body.userId},{$set:{currentPeriod:Period,parity:parity}});
+                      
+                    }
+                  }
+                 break;
+                case 'sapre':
+                 bet = BetSapreModel({userId:req.body.userId,Period:Period,time:time,betType:req.body.betType,value:req.body.value,no_of_orders:req.body.no_of_orders,contract_amount:req.body.contract_amount,total_amount:total});
+                  
+                 if(lastPeriod !== parseInt(Period)){
+                  //its for the first time
+  
+                let zeroArr = [0,0,0,0,0,0,0,0,0,0,0,0,0];
+                let AllZero = [0,0,0,0,0,0,0,0,0,0,0,0,0];
+  
+                if(req.body.betType !== 'color'){
+                  //it is number bet
+                    zeroArr[req.body.value] = (total - (total*2)/100)*9;
+                    await RegisterModel.updateOne({_id:req.body.userId},{$set:{currentPeriod:Period,parity:AllZero,sapre:zeroArr,bcone:AllZero,emerd:AllZero}});
+                }else{
+  
+                  //it is color bet
+                  if(req.body.value === 'Green'){
+                    zeroArr[10] = (total - (total*2)/100)*2;
+                  }else if(req.body.value === 'Violet'){
+                    zeroArr[11] = (total - (total*2)/100)*4.5;
+                  }else{
+                    zeroArr[12] = (total - (total*2)/100)*2;
+                  }
+                  await RegisterModel.updateOne({_id:req.body.userId},{$set:{currentPeriod:Period,parity:AllZero,sapre:zeroArr,bcone:AllZero,emerd:AllZero}});
+                }
+   
+                 }else{
+                  let zeroArr = [0,0,0,0,0,0,0,0,0,0,0,0,0];
+                  if(req.body.betType !== 'color'){
+                    zeroArr[req.body.value] = (total - (total*2)/100)*9;7
+                    let sapre = oldSapreArr.map((v,i)=>zeroArr[i]+v);
+                    await RegisterModel.updateOne({_id:req.body.userId},{$set:{currentPeriod:Period,sapre:sapre}});
+                  }else{
+  
+                    if(req.body.value === 'Green'){
+                      zeroArr[10] = (total - (total*2)/100)*2;
+                      }else if(req.body.value === 'Violet'){
+                      zeroArr[11] = (total - (total*2)/100)*4.5;
+                      }else{
+                      zeroArr[12] = (total - (total*2)/100)*2;
+                      }
+  
+                    let sapre = oldSapreArr.map((v,i)=>zeroArr[i]+v);
+                    await RegisterModel.updateOne({_id:req.body.userId},{$set:{currentPeriod:Period,sapre:sapre}});
+                  }
+                 }
+                 
+                 break;
+                case 'bcone':
+                 bet = BetBconeModel({userId:req.body.userId,Period:Period,time:time,betType:req.body.betType,value:req.body.value,no_of_orders:req.body.no_of_orders,contract_amount:req.body.contract_amount,total_amount:total});
+                 
+                 if(lastPeriod !== parseInt(Period)){
+                  //its for the first time
+  
+                let zeroArr = [0,0,0,0,0,0,0,0,0,0,0,0,0];
+                let AllZero = [0,0,0,0,0,0,0,0,0,0,0,0,0];
+  
+                if(req.body.betType !== 'color'){
+                  //it is number bet
+                    zeroArr[req.body.value] = (total - (total*2)/100)*9;
+                    await RegisterModel.updateOne({_id:req.body.userId},{$set:{currentPeriod:Period,parity:AllZero,sapre:AllZero,bcone:zeroArr,emerd:AllZero}});
+                }else{
+  
+                  //it is color bet
+                  if(req.body.value === 'Green'){
+                    zeroArr[10] = (total - (total*2)/100)*2;
+                  }else if(req.body.value === 'Violet'){
+                    zeroArr[11] = (total - (total*2)/100)*4.5;
+                  }else{
+                    zeroArr[12] = (total - (total*2)/100)*2;
+                  }
+                  await RegisterModel.updateOne({_id:req.body.userId},{$set:{currentPeriod:Period,parity:AllZero,sapre:AllZero,bcone:zeroArr,emerd:AllZero}});
+                }
+   
+                 }else{
+                  let zeroArr = [0,0,0,0,0,0,0,0,0,0,0,0,0];
+                  if(req.body.betType !== 'color'){
+                    zeroArr[req.body.value] = (total - (total*2)/100)*9;7
+                    let bcone = oldBconeArr.map((v,i)=>zeroArr[i]+v);
+                    await RegisterModel.updateOne({_id:req.body.userId},{$set:{currentPeriod:Period,bcone:bcone}});
+                  }else{
+  
+                    if(req.body.value === 'Green'){
+                      zeroArr[10] = (total - (total*2)/100)*2;
+                      }else if(req.body.value === 'Violet'){
+                      zeroArr[11] = (total - (total*2)/100)*4.5;
+                      }else{
+                      zeroArr[12] = (total - (total*2)/100)*2;
+                      }
+  
+                    let bcone = oldBconeArr.map((v,i)=>zeroArr[i]+v);
+                    await RegisterModel.updateOne({_id:req.body.userId},{$set:{currentPeriod:Period,bcone:bcone}});
+                  }
+                 }
+  
+                 break;
+                case 'emerd':
+                 bet = BetEmerdModel({userId:req.body.userId,Period:Period,time:time,betType:req.body.betType,value:req.body.value,no_of_orders:req.body.no_of_orders,contract_amount:req.body.contract_amount,total_amount:total});
                 
-               break;
-              case 'sapre':
-               bet = BetSapreModel({userId:req.body.userId,Period:Period,time:time,betType:req.body.betType,value:req.body.value,no_of_orders:req.body.no_of_orders,contract_amount:req.body.contract_amount,total_amount:total});
-                break;
-              case 'bcone':
-               bet = BetBconeModel({userId:req.body.userId,Period:Period,time:time,betType:req.body.betType,value:req.body.value,no_of_orders:req.body.no_of_orders,contract_amount:req.body.contract_amount,total_amount:total});
-                break;
-              case 'emerd':
-               bet = BetEmerdModel({userId:req.body.userId,Period:Period,time:time,betType:req.body.betType,value:req.body.value,no_of_orders:req.body.no_of_orders,contract_amount:req.body.contract_amount,total_amount:total});
-                break;
-              default:
-                break;
+                 if(lastPeriod !== parseInt(Period)){
+                  //its for the first time
+  
+                let zeroArr = [0,0,0,0,0,0,0,0,0,0,0,0,0];
+                let AllZero = [0,0,0,0,0,0,0,0,0,0,0,0,0];
+  
+                if(req.body.betType !== 'color'){
+                  //it is number bet
+                    zeroArr[req.body.value] = (total - (total*2)/100)*9;
+                    await RegisterModel.updateOne({_id:req.body.userId},{$set:{currentPeriod:Period,parity:AllZero,sapre:AllZero,bcone:AllZero,emerd:zeroArr}});
+                }else{
+  
+                  //it is color bet
+                  if(req.body.value === 'Green'){
+                    zeroArr[10] = (total - (total*2)/100)*2;
+                  }else if(req.body.value === 'Violet'){
+                    zeroArr[11] = (total - (total*2)/100)*4.5;
+                  }else{
+                    zeroArr[12] = (total - (total*2)/100)*2;
+                  }
+                  await RegisterModel.updateOne({_id:req.body.userId},{$set:{currentPeriod:Period,parity:AllZero,sapre:AllZero,bcone:AllZero,emerd:zeroArr}});
+                }
+   
+                 }else{
+                  let zeroArr = [0,0,0,0,0,0,0,0,0,0,0,0,0];
+                  if(req.body.betType !== 'color'){
+                    zeroArr[req.body.value] = (total - (total*2)/100)*9;7
+                    let emerd = oldEmerdArr.map((v,i)=>zeroArr[i]+v);
+                    await RegisterModel.updateOne({_id:req.body.userId},{$set:{currentPeriod:Period,emerd:emerd}});
+                  }else{
+  
+                    if(req.body.value === 'Green'){
+                      zeroArr[10] = (total - (total*2)/100)*2;
+                      }else if(req.body.value === 'Violet'){
+                      zeroArr[11] = (total - (total*2)/100)*4.5;
+                      }else{
+                      zeroArr[12] = (total - (total*2)/100)*2;
+                      }
+  
+                    let emerd = oldEmerdArr.map((v,i)=>zeroArr[i]+v);
+                    await RegisterModel.updateOne({_id:req.body.userId},{$set:{currentPeriod:Period,emerd:emerd}});
+                  }
+                 }
+  
+                  break;
+                default:
+                  break;
+              }
+              const saveBet = await bet.save();
+              res.json({message:'success',remain:remain});
+
+              if(inviteCode !== ''){
+                const parentData = await RegisterModel.findOne({ReferCode:inviteCode});
+                if(parentData){
+                  const MainWallet = await RegisterModel.updateOne({ReferCode:inviteCode},{$inc:{bonusWallet:(total*0.015)}});
+                  const wallet1 = await RegisterModel.updateOne({ReferCode:inviteCode},{$inc:{bonusWallet1:(total*0.015)}});
+                  const parentInviteCode = parentData.inviteCode;
+                  const grandParent = await RegisterModel.findOne({ReferCode:parentInviteCode});
+                  if(grandParent){
+                    const MainWallet = await RegisterModel.updateOne({ReferCode:parentInviteCode},{$inc:{bonusWallet:(total*0.005)}});
+                    const wallet2 = await RegisterModel.updateOne({ReferCode:parentInviteCode},{$inc:{bonusWallet2:(total*0.005)}});                  
+                  }
+                 }
+                }
             }
-            const saveBet = await bet.save();
-            res.json({message:'success',remain:remain});
         }else{
             res.json({message:'BALANCE_ERROR'});
         }
-
-        // console.log(req.body.server,
-        //     req.body.betType,
-        //     req.body.value,
-        //     req.body.no_of_orders,
-        //     req.body.contract_amount);
-
 
     }else{
         res.json({message:'AUTH_FAILED'});

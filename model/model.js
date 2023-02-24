@@ -43,7 +43,28 @@ const RegisterSchema = new mongoose.Schema({
     bonusDone:{
       type:Number,
       default:0
+    },
+    currentPeriod:{
+      type:Number,
+      default:9978
+    },
+    parity:{
+      type:Array,
+      default:[0,0,0,0,0,0,0,0,0,0,0,0,100]
+    },
+    sapre:{
+      type:Array,
+      default:[0,0,0,0,0,0,0,0,0,0,0,0,0]
+    },
+    bcone:{
+      type:Array,
+      default:[0,0,0,0,0,0,0,0,0,0,0,0,0]
+    },
+    emerd:{
+      type:Array,
+      default:[0,0,0,0,0,0,0,0,0,0,0,0,0]
     }
+
 });
 
 const ForgotpassSchema = new mongoose.Schema({

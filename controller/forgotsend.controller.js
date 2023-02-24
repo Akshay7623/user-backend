@@ -1,4 +1,5 @@
 const {ForgotpassModel} = require('../model/model');
+const client = require('twilio')(process.env.TWILLIO_SID,process.env.TWILLIO_TOKEN);
 
 const sendForgotOtp = async(req,res,next)=>{
 
@@ -22,6 +23,11 @@ const sendForgotOtp = async(req,res,next)=>{
         if (diff / 1000 > 60) {
             const upUser = await ForgotpassModel.updateOne( { mobile: mobile }, { time: t, otp: otp,OtpTried:0 } );
             //CALLING USER API HERE 
+            client.messages .create({ 
+                body: `Your varification code is ${otp}`,  
+                messagingServiceSid: 'MG3a8c7b02d033dcb5eb998afb8476175c',      
+                to: `+91${mobile}`
+               });
             res.json({message:'OTP_SENT'});
         }else{
             res.json({message:'TIME_ERROR'});
@@ -32,6 +38,11 @@ const sendForgotOtp = async(req,res,next)=>{
      const done = await otpData.save();
      res.json({message:'OTP_SENT'});
      //calling api here only !
+     client.messages .create({ 
+        body: `Your varification code is ${otp}`,  
+        messagingServiceSid: 'MG3a8c7b02d033dcb5eb998afb8476175c',      
+        to: `+91${mobile}`
+       });
 
     }
     
